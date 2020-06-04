@@ -1,7 +1,9 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const cssProp = (element: HTMLElement,
+const cssProp = (
+  element: HTMLElement,
   cssProperty: string | { [index: string]: string },
-  value?: string) => {
+  value?: string,
+) => {
   const styles = element.style;
   if (!value) {
     if (typeof cssProperty === 'string') {
