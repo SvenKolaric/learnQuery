@@ -9,7 +9,7 @@
   "scripts": {
     "tsc": "tsc",
     "watch-build": "npx tsc --watch",
-    "lint": "eslint --ext .ts ./ --fix",
+    "lint": "eslint --ext .ts ./",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -24,6 +24,7 @@
   },
   "homepage": "https://github.com/SvenKolaric/learnQuery#readme",
   "dependencies": {
+    "editorconfig": "^0.15.3",
     "eslint-config-airbnb-base": "^14.1.0",
     "typescript": "^3.9.3"
   },
