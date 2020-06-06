@@ -7,7 +7,7 @@ const dom = {
     targetElement.append(element);
   },
   after(targetElement: HTMLElement, element: HTMLElement) {
-    targetElement.parentElement?.insertBefore(element, targetElement.nextSibling);
+    targetElement.after(element);
   },
   before(targetElement: HTMLElement, element: HTMLElement) {
     targetElement.before(element);
