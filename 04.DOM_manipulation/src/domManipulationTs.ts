@@ -15,7 +15,7 @@ const dom = {
   prepend(targetElement: HTMLElement, element: HTMLElement) {
     targetElement.prepend(element);
   },
-  val(element: HTMLElement) {
-    return (element as HTMLInputElement).value;
+  val(element: HTMLInputElement) {
+    return element.value ? element.value : element.textContent;
   },
 };
