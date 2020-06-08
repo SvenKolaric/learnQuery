@@ -1,36 +1,39 @@
 interface Options {
-  method: string,
-  data: {},
-  context: any,
-  failure(request: any, status: any, resText: any): any,
-  success(data: any, status: any, request: any): any,
-  complete(request: any, status: any): any
+  method?: 'GET' | 'POST',
+  data?: JSON,
+  context?: object,
+  failure?(request: XMLHttpRequest, status: number, resText: string): void,
+  success?(data: JSON, status: number, request: XMLHttpRequest): void,
+  complete?(request: XMLHttpRequest, status: number): void
 }
 
-const initialState: Options = {
+const defaultOptions: Options = {
   method: 'GET',
-  data: {},
+  data: undefined,
   context: this,
-  failure: () => {},
-  success: () => {},
-  complete: () => {},
+  failure: () => { },
+  success: () => { },
+  complete: () => { },
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const ajaxReq = (url: string, options: Options) => {
   const request = new XMLHttpRequest();
-  const o: Options = {
-    ...initialState,
+  const reqOptions: Options = {
+    ...defaultOptions,
     ...options,
   };
   request.onload = () => {
-    if (request.status >= 200 && request.status < 300) {
-      o.success.call(o.context, JSON.parse(request.responseText), request.status, request);
-    } else {
-      o.failure.call(o.context, request, request.status, request.responseText);
+    if (request.readyState === 4) {
+      if (request.status >= 200 && request.status < 300) {
+        reqOptions.success!.call(options.context,
+          JSON.parse(request.responseText), request.status, request);
+      } else {
+        reqOptions.failure!.call(reqOptions.context, request, request.status, request.responseText);
+      }
+      reqOptions.complete!.call(reqOptions.context, request, request.status);
     }
-    o.complete.call(o.context, request, request.status);
   };
-  request.open(o.method, url);
-  request.send();
+  request.open(reqOptions.method!, url);
+  request.send(JSON.stringify(reqOptions.data));
 };
