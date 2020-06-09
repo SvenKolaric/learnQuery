@@ -1,5 +1,5 @@
 interface Options {
-  method?: 'GET' | 'POST',
+  method?: MethodType.GET | MethodType.POST,
   data?: JSON,
   context?: object,
   failure?(request: XMLHttpRequest, status: number, resText: string): void,
@@ -7,8 +7,13 @@ interface Options {
   complete?(request: XMLHttpRequest, status: number): void
 }
 
+enum MethodType {
+  GET = 'GET',
+  POST = 'POST'
+}
+
 const defaultOptions: Options = {
-  method: 'GET',
+  method: MethodType.GET,
   data: undefined,
   context: this,
   failure: () => { },
