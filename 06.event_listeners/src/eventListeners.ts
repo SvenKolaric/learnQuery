@@ -1,18 +1,15 @@
 interface Data {
-  events: string[],
-  callbacks: EventListener[],
+  events: Map<string, EventListener[]>
 }
 
-const eventMap: Map<HTMLElement, Data> = new Map<HTMLElement, Data>();
+const elementMap: Map<HTMLElement, Data> = new Map<HTMLElement, Data>();
 
 function eventHandler(event: Event) {
   const { target } = event;
-  if (target instanceof HTMLElement && eventMap.has(target)) {
-    const callbackArray = eventMap.get(target)?.callbacks;
-    callbackArray!.forEach((callback, index) => {
-      if (eventMap.get(target)?.events[index] === event.type) {
-        callback(event);
-      }
+  if (target instanceof HTMLElement && elementMap.has(target)) {
+    const callbackArray = elementMap.get(target)?.events.get(event.type);
+    callbackArray!.forEach((callback) => {
+      callback(event);
     });
   }
 }
@@ -20,34 +17,33 @@ function eventHandler(event: Event) {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const eventListener = {
   on(element: HTMLElement, event: string, callback: EventListener) {
-    if (!eventMap.has(element)) {
-      eventMap.set(element, {
-        events: [event],
-        callbacks: [callback],
+    if (!elementMap.has(element)) {
+      elementMap.set(element, {
+        events: new Map([[event, [callback]]]),
       });
     } else {
-      const dataObject = eventMap.get(element);
-      dataObject!.callbacks.push(callback);
-      dataObject!.events.push(event);
+      const mapEvent = elementMap.get(element)!.events;
+      if (!mapEvent.has(event)) {
+        mapEvent.set(event, [callback]);
+      } else {
+        mapEvent.get(event)!.push(callback);
+      }
     }
     element.addEventListener(event, eventHandler);
   },
   off(element: HTMLElement, event?: string, callback?: EventListener) {
     if (event) {
-      const dataObject = eventMap.get(element);
+      const callbackArray = elementMap.get(element)!.events.get(event);
       if (callback) {
-        const index = dataObject!.callbacks.indexOf(callback, 0);
+        const index = callbackArray!.indexOf(callback, 0);
         if (index > -1) {
-          dataObject!.callbacks.splice(index, 1);
-          dataObject!.events.splice(index, 1);
+          callbackArray!.splice(index, 1);
         }
       } else {
-        // Removes all events not just clicks -> filter
-        dataObject!.callbacks.length = 0;
-        dataObject!.events.length = 0;
+        callbackArray!.length = 0;
       }
     } else {
-      eventMap.clear();
+      elementMap.clear();
     }
   },
   trigger(element: HTMLElement, event: string) {
