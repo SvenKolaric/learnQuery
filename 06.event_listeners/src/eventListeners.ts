@@ -8,7 +8,7 @@ function eventHandler(event: Event) {
   // eslint-disable-next-line prefer-destructuring
   const target = <HTMLElement>event.target;
   if (target && elementMap.has(target) && elementMap.get(target)?.events.has(event.type)) {
-    const callbackArray = elementMap.get(target)?.events.get(event.type);
+    const callbackArray = elementMap.get(target)!.events.get(event.type);
     callbackArray!.forEach((callback) => {
       callback(event);
     });
@@ -55,10 +55,13 @@ const eventListener = {
             if (index > -1) {
               removeEventsForCallbackArray(element, event, [callback]);
               callbackArray.splice(index, 1);
+              if (callbackArray.length === 0) {
+                elementMap.get(element)!.events.delete(event);
+              }
             }
           } else {
             removeEventsForCallbackArray(element, event, callbackArray);
-            callbackArray.length = 0;
+            elementMap.get(element)!.events.delete(event);
           }
         }
       } else {
