@@ -1,5 +1,5 @@
 interface Data {
-  events: Map<string, Function[]>
+  events: Map<string, EventListener[]>
 }
 
 const elementMap: Map<HTMLElement, Data> = new Map<HTMLElement, Data>();
@@ -15,9 +15,21 @@ function eventHandler(event: Event) {
   }
 }
 
+function removeEventsForCallbackArray(
+  element: HTMLElement,
+  event: string,
+  callbackArray: EventListener[],
+) {
+  if (element && event && callbackArray) {
+    callbackArray.forEach((callback) => {
+      element.removeEventListener(event, callback);
+    });
+  }
+}
+
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const eventListener = {
-  on(element: HTMLElement, event: string, callback: Function) {
+  on(element: HTMLElement, event: string, callback: EventListener) {
     if (!elementMap.has(element)) {
       elementMap.set(element, {
         events: new Map([[event, [callback]]]),
@@ -32,37 +44,51 @@ const eventListener = {
     }
     element.addEventListener(event, eventHandler);
   },
-  off(element: HTMLElement, event?: string, callback?: Function) {
-    if (event) {
-      const callbackArray = elementMap.get(element)!.events.get(event);
-      if (callback) {
-        const index = callbackArray!.indexOf(callback, 0);
-        if (index > -1) {
-          callbackArray!.splice(index, 1);
+
+  off(element: HTMLElement, event?: string, callback?: EventListener) {
+    if (elementMap.has(element)) {
+      if (event && elementMap.get(element)!.events.has(event)) {
+        const callbackArray = elementMap.get(element)!.events.get(event);
+        if (callbackArray) {
+          if (callback) {
+            const index = callbackArray.indexOf(callback, 0);
+            if (index > -1) {
+              removeEventsForCallbackArray(element, event, [callback]);
+              callbackArray.splice(index, 1);
+            }
+          } else {
+            removeEventsForCallbackArray(element, event, callbackArray);
+            callbackArray.length = 0;
+          }
         }
       } else {
-        callbackArray!.length = 0;
+        elementMap.forEach((elementValue, elementKey) => {
+          elementValue.events.forEach((eventValue, eventKey) => {
+            removeEventsForCallbackArray(elementKey, eventKey, eventValue);
+          });
+        });
+        elementMap.clear();
       }
-    } else {
-      elementMap.clear();
     }
   },
+
   trigger(element: HTMLElement, event: string) {
     const triggerEvent = new Event(event);
     element.dispatchEvent(triggerEvent);
   },
-  delegate(element: HTMLElement, className: string, eventType: string, callback: Function) {
+
+  delegate(element: HTMLElement, className: string, eventType: string, callback: EventListener) {
     // eslint-disable-next-line consistent-return
     element.addEventListener(eventType, (event: Event) => {
       // eslint-disable-next-line prefer-destructuring
       const target = <HTMLElement>event.target;
       if (target) {
         if (target.className === className) {
-          return callback();
+          return callback(event);
         }
         const targetClosest = target.closest(`.${className}`);
         if (targetClosest && element.contains(targetClosest)) {
-          return callback();
+          return callback(event);
         }
       }
     });
