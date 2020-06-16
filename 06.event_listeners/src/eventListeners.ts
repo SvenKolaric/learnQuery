@@ -1,12 +1,13 @@
 interface Data {
-  events: Map<string, EventListener[]>
+  events: Map<string, Function[]>
 }
 
 const elementMap: Map<HTMLElement, Data> = new Map<HTMLElement, Data>();
 
 function eventHandler(event: Event) {
-  const { target } = event;
-  if (target instanceof HTMLElement && elementMap.has(target)) {
+  // eslint-disable-next-line prefer-destructuring
+  const target = <HTMLElement>event.target;
+  if (target && elementMap.has(target) && elementMap.get(target)?.events.has(event.type)) {
     const callbackArray = elementMap.get(target)?.events.get(event.type);
     callbackArray!.forEach((callback) => {
       callback(event);
@@ -16,7 +17,7 @@ function eventHandler(event: Event) {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const eventListener = {
-  on(element: HTMLElement, event: string, callback: EventListener) {
+  on(element: HTMLElement, event: string, callback: Function) {
     if (!elementMap.has(element)) {
       elementMap.set(element, {
         events: new Map([[event, [callback]]]),
@@ -31,7 +32,7 @@ const eventListener = {
     }
     element.addEventListener(event, eventHandler);
   },
-  off(element: HTMLElement, event?: string, callback?: EventListener) {
+  off(element: HTMLElement, event?: string, callback?: Function) {
     if (event) {
       const callbackArray = elementMap.get(element)!.events.get(event);
       if (callback) {
@@ -53,8 +54,9 @@ const eventListener = {
   delegate(element: HTMLElement, className: string, eventType: string, callback: Function) {
     // eslint-disable-next-line consistent-return
     element.addEventListener(eventType, (event: Event) => {
-      const { target } = event;
-      if (target instanceof Element) {
+      // eslint-disable-next-line prefer-destructuring
+      const target = <HTMLElement>event.target;
+      if (target) {
         if (target.className === className) {
           return callback();
         }
