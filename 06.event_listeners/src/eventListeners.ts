@@ -1,11 +1,6 @@
 /* eslint-disable no-console */
 interface EventsMap {
-  events: Map<string, CallbackData>
-}
-
-interface CallbackData {
-  callbacks: EventListener[],
-  eventHandler: EventListener,
+  events: Map<string, EventListener[]>
 }
 
 const elementMap: Map<HTMLElement, EventsMap> = new Map<HTMLElement, EventsMap>();
@@ -15,7 +10,7 @@ function eventHandler(event: Event) {
   const target = <HTMLElement>event.target;
   if (target && elementMap.has(target) && elementMap.get(target)?.events.has(event.type)) {
     const callbackArray = elementMap.get(target)!.events.get(event.type);
-    callbackArray!.callbacks.forEach((callback) => {
+    callbackArray!.forEach((callback) => {
       callback(event);
     });
   } else {
@@ -26,12 +21,11 @@ function eventHandler(event: Event) {
 function removeEvent(
   element: HTMLElement,
   event: string,
-  eventHandlerEvn: EventListener,
 ) {
-  if (element && event && eventHandlerEvn) {
-    element.removeEventListener(event, eventHandlerEvn);
+  if (element && event) {
+    element.removeEventListener(event, eventHandler);
   } else {
-    console.warn(`RemoveEvent is missing required data, element: ${element.id}, event: "${event}" or eventHandler`);
+    console.warn(`RemoveEvent is missing required data, element: ${element.id}, event: "${event}"`);
   }
 }
 
@@ -40,14 +34,14 @@ const eventListener = {
   on(element: HTMLElement, event: string, callback: EventListener) {
     if (!elementMap.has(element)) {
       elementMap.set(element, {
-        events: new Map([[event, { callbacks: [callback], eventHandler }]]),
+        events: new Map([[event, [callback]]]),
       });
     } else {
       const mapEvent = elementMap.get(element)!.events;
       if (!mapEvent.has(event)) {
-        mapEvent.set(event, { callbacks: [callback], eventHandler });
+        mapEvent.set(event, [callback]);
       } else {
-        mapEvent.get(event)!.callbacks.push(callback);
+        mapEvent.get(event)!.push(callback);
       }
     }
     element.addEventListener(event, eventHandler);
@@ -57,21 +51,21 @@ const eventListener = {
     if (elementMap.has(element)) {
       const eventMap = elementMap.get(element);
       if (event) {
-        const callbackData = eventMap!.events.get(event);
-        if (callbackData) {
+        const callbackArray = eventMap!.events.get(event);
+        if (callbackArray) {
           if (callback) {
-            const index = callbackData.callbacks.indexOf(callback, 0);
+            const index = callbackArray.indexOf(callback, 0);
             if (index > -1) {
-              callbackData.callbacks.splice(index, 1);
-              if (callbackData.callbacks.length === 0) {
+              callbackArray.splice(index, 1);
+              if (callbackArray.length === 0) {
                 eventMap!.events.delete(event);
-                removeEvent(element, event, callbackData.eventHandler);
+                removeEvent(element, event);
               }
             } else {
               console.warn(`The callback function doesn't exist inside events.callbacks for event: "${event}" on element: ${element.id}`);
             }
           } else {
-            removeEvent(element, event, callbackData.eventHandler);
+            removeEvent(element, event);
             eventMap!.events.delete(event);
           }
         } else {
@@ -80,7 +74,7 @@ const eventListener = {
       } else {
         elementMap.forEach((elementValue, elementKey) => {
           elementValue.events.forEach((eventValue, eventKey) => {
-            removeEvent(elementKey, eventKey, eventValue.eventHandler);
+            removeEvent(elementKey, eventKey);
           });
         });
         elementMap.clear();
