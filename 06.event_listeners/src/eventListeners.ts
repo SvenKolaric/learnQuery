@@ -60,6 +60,9 @@ const eventListener = {
               if (callbackArray.length === 0) {
                 eventMap!.events.delete(event);
                 removeEvent(element, event);
+                if (eventMap!.events.size === 0) {
+                  elementMap.delete(element);
+                }
               }
             } else {
               console.warn(`The callback function doesn't exist inside events.callbacks for event: "${event}" on element: ${element.id}`);
