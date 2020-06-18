@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 interface EventsMap {
   events: Map<string, CallbackData>
 }
@@ -17,6 +18,8 @@ function eventHandler(event: Event) {
     callbackArray!.callbacks.forEach((callback) => {
       callback(event);
     });
+  } else {
+    console.warn(`EventHandler doesn't have the required data for event: "${event.type}" on element: ${target.id}`);
   }
 }
 
@@ -27,6 +30,8 @@ function removeEvent(
 ) {
   if (element && event && eventHandlerEvn) {
     element.removeEventListener(event, eventHandlerEvn);
+  } else {
+    console.warn(`RemoveEvent is missing required data, element: ${element.id}, event: "${event}" or eventHandler`);
   }
 }
 
@@ -48,24 +53,29 @@ const eventListener = {
     element.addEventListener(event, eventHandler);
   },
 
-  off(element: HTMLElement, event?: string, callback?: EventListener) { // jako off
+  off(element: HTMLElement, event?: string, callback?: EventListener) {
     if (elementMap.has(element)) {
-      if (event && elementMap.get(element)!.events.has(event)) { //  pojednostavi event je vazna provjera
-        const callbackData = elementMap.get(element)!.events.get(event);
+      const eventMap = elementMap.get(element);
+      if (event) {
+        const callbackData = eventMap!.events.get(event);
         if (callbackData) {
-          if (callback) { // vazna provjera
+          if (callback) {
             const index = callbackData.callbacks.indexOf(callback, 0);
             if (index > -1) {
               callbackData.callbacks.splice(index, 1);
               if (callbackData.callbacks.length === 0) {
-                elementMap.get(element)!.events.delete(event);
+                eventMap!.events.delete(event);
                 removeEvent(element, event, callbackData.eventHandler);
               }
+            } else {
+              console.warn(`The callback function doesn't exist inside events.callbacks for event: "${event}" on element: ${element.id}`);
             }
           } else {
             removeEvent(element, event, callbackData.eventHandler);
-            elementMap.get(element)!.events.delete(event);
+            eventMap!.events.delete(event);
           }
+        } else {
+          console.warn(`The given element "${element.id}" doesn't have any event of type: "${event}"`);
         }
       } else {
         elementMap.forEach((elementValue, elementKey) => {
@@ -75,6 +85,8 @@ const eventListener = {
         });
         elementMap.clear();
       }
+    } else {
+      console.warn(`The given element dosen't exist inside elementMap: ${element.id}`);
     }
   },
 
@@ -96,6 +108,8 @@ const eventListener = {
         if (targetClosest && element.contains(targetClosest)) {
           return callback(event);
         }
+      } else {
+        console.warn('Event target is null');
       }
     });
   },
