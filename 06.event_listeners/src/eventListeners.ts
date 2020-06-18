@@ -67,6 +67,9 @@ const eventListener = {
           } else {
             removeEvent(element, event);
             eventMap!.events.delete(event);
+            if (eventMap!.events.size === 0) {
+              elementMap.delete(element);
+            }
           }
         } else {
           console.warn(`The given element "${element.id}" doesn't have any event of type: "${event}"`);
