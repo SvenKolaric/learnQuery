@@ -29,6 +29,23 @@ function removeEvent(
   }
 }
 
+function cleanupElementMap() {
+  if (elementMap.size !== 0) {
+    elementMap.forEach((elementValue, elementKey) => {
+      if (elementValue.events.size !== 0) {
+        elementValue.events.forEach((callbacks, event) => {
+          if (callbacks.length === 0) {
+            elementValue.events.delete(event);
+          }
+        });
+      }
+      if (elementValue.events.size === 0) {
+        elementMap.delete(elementKey);
+      }
+    });
+  }
+}
+
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const eventListener = {
   on(element: HTMLElement, event: string, callback: EventListener) {
@@ -57,22 +74,12 @@ const eventListener = {
             const index = callbackArray.indexOf(callback, 0);
             if (index > -1) {
               callbackArray.splice(index, 1);
-              if (callbackArray.length === 0) {
-                eventMap!.events.delete(event);
-                removeEvent(element, event);
-                if (eventMap!.events.size === 0) {
-                  elementMap.delete(element);
-                }
-              }
             } else {
               console.warn(`The callback function doesn't exist inside events.callbacks for event: "${event}" on element: ${element.id}`);
             }
           } else {
             removeEvent(element, event);
             eventMap!.events.delete(event);
-            if (eventMap!.events.size === 0) {
-              elementMap.delete(element);
-            }
           }
         } else {
           console.warn(`The given element "${element.id}" doesn't have any event of type: "${event}"`);
@@ -83,8 +90,9 @@ const eventListener = {
             removeEvent(elementKey, eventKey);
           });
         });
-        elementMap.clear();
+        elementMap.delete(element);
       }
+      cleanupElementMap();
     } else {
       console.warn(`The given element dosen't exist inside elementMap: ${element.id}`);
     }
