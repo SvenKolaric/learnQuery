@@ -86,9 +86,11 @@ const eventListener = {
         }
       } else {
         elementMap.forEach((elementValue, elementKey) => {
-          elementValue.events.forEach((eventValue, eventKey) => {
-            removeEvent(elementKey, eventKey);
-          });
+          if (elementKey === element) {
+            elementValue.events.forEach((eventValue, eventKey) => {
+              removeEvent(elementKey, eventKey);
+            });
+          }
         });
         elementMap.delete(element);
       }
