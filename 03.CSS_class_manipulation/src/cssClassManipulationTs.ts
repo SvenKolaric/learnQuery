@@ -25,3 +25,5 @@ const cssClass = {
     return htmlElement.classList.contains(className);
   },
 };
+
+export default cssClass;
